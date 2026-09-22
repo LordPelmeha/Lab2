@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lesson 4</title>
+    <title>MiniMaple</title>
     <meta charset="UTF-8"/>
-
-    <script src="src/index.js" type="module"></script>
+    <style>
+        #container > * { margin: 6px 0; display: block; }
+        #result { min-height: 1.2em; padding: 6px; border: 1px dashed #aaa; }
+    </style>
 </head>
-
 <body>
-<h1>Implement the symbolic diff here</h1>
-<div id="container">
-
-</div>
-<div>
-    <button id="demoButton">
-        Add something
-    </button>
-</div>
+    <h1>MiniMaple - Symbolic Differentiation</h1>
+    <div id="container">
+        <input type="text" id="expressionInput" placeholder="e.g. 4*x^3" />
+        <input type="text" id="variableInput" placeholder="e.g. x" />
+        <button id="diffButton">Differentiate</button>
+        <div id="result"></div>
+    </div>
+    <script src="src/miniMaple.js"></script>
+    <script src="src/index.js"></script>
 </body>
 </html>

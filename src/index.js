@@ -1,14 +1,27 @@
-document.addEventListener('DOMContentLoaded',setup)
-
-function setup() {
-    document.getElementById('demoButton').onclick = addSomething;
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setup);
+} else {
+  setup();
 }
 
-function addSomething(){
-    const someDummyDiv = document.createElement('div');
-    someDummyDiv.classList.add('generated');
-    const count = document.getElementsByClassName('generated').length;
-    someDummyDiv.innerHTML = `I was created by JS! There are already ${count} of my friends!`;
-    const container = document.getElementById('container');
-    container.appendChild(someDummyDiv);
+function setup() {
+    document.getElementById('diffButton').onclick = runDiff;
+}
+
+function runDiff() {
+    const expr = document.getElementById('expressionInput').value;
+    const variable = document.getElementById('variableInput').value;
+    const resultDiv = document.getElementById('result');
+
+    console.log('runDiff called', { expr, variable });
+
+    try {
+        const maple = new window.MiniMaple();
+        const result = maple.diff(expr, variable);
+        console.log('diff result', result);
+        resultDiv.textContent = result;
+    } catch (e) {
+        console.error('diff error', e);
+        resultDiv.textContent = 'Error: ' + e.message;
+    }
 }
