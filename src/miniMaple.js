@@ -1,5 +1,4 @@
 class MiniMaple {
-
   diff(expression, variable) {
     const tokens = this.tokenize(expression);
     const ast = this.parse(tokens);
@@ -17,19 +16,22 @@ class MiniMaple {
         i++;
         continue;
       }
-      if (/[+\-*^()]/.test(ch)) {
+      if (/[+\-*^]/.test(ch)) {
         tokens.push({ type: 'op', value: ch });
         i++;
-      } else if (/\d/.test(ch)) {
+      } 
+      else if (/\d/.test(ch)) {
         let num = '';
         while (i < expr.length && /\d/.test(expr[i])) {
           num += expr[i++];
         }
         tokens.push({ type: 'number', value: parseInt(num, 10) });
-      } else if (/[a-zA-Z]/.test(ch)) {
+      } 
+      else if (/[a-zA-Z]/.test(ch)) {
         tokens.push({ type: 'variable', name: ch });
         i++;
-      } else {
+      } 
+      else {
         throw new Error(`Unexpected character: ${ch}`);
       }
     }
@@ -103,10 +105,6 @@ class MiniMaple {
               },
               right: leftDeriv
             };
-          }
-
-          if (left.type === 'number') {
-            return { type: 'number', value: 0 };
           }
 
           throw new Error('Power rule with non-constant exponent is not supported');
@@ -192,33 +190,39 @@ class MiniMaple {
     }
   }
 
+  getPrecedence(node) {
+    if (node.type === 'binary') {
+      switch (node.op) {
+        case '+': case '-': return 1;
+        case '*': return 2;
+        case '^': return 3;
+      }
+    }
+    return 4;
+  }
+
   stringify(node) {
     if (node.type === 'number') return String(node.value);
     if (node.type === 'variable') return node.name;
 
+    const op = node.op;
     const left = this.stringify(node.left);
     const right = this.stringify(node.right);
+    const leftPrec = this.getPrecedence(node.left);
+    const rightPrec = this.getPrecedence(node.right);
+    const myPrec = this.getPrecedence(node);
 
-    switch (node.op) {
-      case '+':
-        if (node.left.type === 'number' && node.left.value === 0) return right;
-        if (node.right.type === 'number' && node.right.value === 0) return left;
-        return `${left}+${right}`;
-      case '-':
-        if (node.right.type === 'number' && node.right.value === 0) return left;
-        if (node.left.type === 'number' && node.left.value === 0) return `-${right}`;
-        return `${left}-${right}`;
-      case '*':
-        if (node.left.type === 'number' && node.left.value === 0) return '0';
-        if (node.right.type === 'number' && node.right.value === 0) return '0';
-        if (node.left.type === 'number' && node.left.value === 1) return right;
-        if (node.right.type === 'number' && node.right.value === 1) return left;
-        return `${left}*${right}`;
-      case '^':
-        if (node.right.type === 'number' && node.right.value === 1) return left;
-        if (node.right.type === 'number' && node.right.value === 0) return '1';
-        return `${left}^${right}`;
+    let leftStr = left;
+    let rightStr = right;
+
+    if (leftPrec < myPrec || (op === '^' && leftPrec === myPrec)) {
+      leftStr = `(${left})`;
     }
+    if (rightPrec < myPrec || (op === '-' && rightPrec === myPrec)) {
+      rightStr = `(${right})`;
+    }
+
+    return `${leftStr}${op}${rightStr}`;
   }
 }
 
@@ -261,27 +265,10 @@ class Parser {
       const right = this.parseFactor();
       left = { type: 'binary', op: '*', left, right };
     }
-    while (
-      this.peek().type === 'number' ||
-      this.peek().type === 'variable' ||
-      (this.peek().type === 'op' && this.peek().value === '(')
-    ) {
-      const right = this.parseFactor();
-      left = { type: 'binary', op: '*', left, right };
-    }
     return left;
   }
 
   parseFactor() {
-    if (this.peek().type === 'op' && this.peek().value === '-') {
-      this.consume();
-      const expr = this.parseFactor();
-      return { type: 'binary', op: '-', left: { type: 'number', value: 0 }, right: expr };
-    }
-    if (this.peek().type === 'op' && this.peek().value === '+') {
-      this.consume();
-      return this.parseFactor();
-    }
     const primary = this.parsePrimary();
     if (this.peek().type === 'op' && this.peek().value === '^') {
       this.consume();
@@ -300,15 +287,6 @@ class Parser {
     if (token.type === 'variable') {
       this.consume();
       return { type: 'variable', name: token.name };
-    }
-    if (token.type === 'op' && token.value === '(') {
-      this.consume();
-      const expr = this.parseExpr();
-      if (this.peek().type !== 'op' || this.peek().value !== ')') {
-        throw new Error('Missing closing parenthesis');
-      }
-      this.consume();
-      return expr;
     }
     throw new Error(`Unexpected token: ${token.type}`);
   }
